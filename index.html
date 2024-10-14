@@ -32,6 +32,21 @@
             font-weight: bold;
             color: red;
         }
+
+        #results {
+            max-height: 200px;
+            /* Atur tinggi maksimum untuk scroll */
+            overflow-y: auto;
+            /* Tambahkan scroll jika konten melebihi tinggi maksimum */
+            border: 1px solid #ccc;
+            /* Tambahkan border untuk pemisah */
+            padding: 10px;
+            /* Tambahkan padding di dalam area scroll */
+            border-radius: 5px;
+            /* Tambahkan radius untuk sudut */
+            background-color: #f9f9f9;
+            /* Warna latar belakang area scroll */
+        }
     </style>
 </head>
 
@@ -190,19 +205,19 @@
 
             results.forEach((result, index) => {
                 let resultText = `<p>Soal ${index + 1}: ${result.question} = ${result.userAnswer} 
-                                  (${result.isCorrect ? 'Benar' : 'Salah'} - Jawaban yang benar: ${result.correctAnswer})</p>`;
+                                  (${result.isCorrect ? 'Benar' : 'Salah'}; Jawaban yang benar: ${result.correctAnswer})</p>`;
                 resultsElement.innerHTML += resultText;
             });
 
             finishSound.play(); // Mainkan suara saat kuis selesai
         }
 
-        // Saat form range dikirim, atur rentang dan mulai kuis
+        // Event listener untuk mengatur rentang dan waktu kuis
         document.getElementById('rangeForm').addEventListener('submit', function (e) {
             e.preventDefault();
             minRange = parseInt(document.getElementById('minRange').value);
             maxRange = parseInt(document.getElementById('maxRange').value);
-            timeLimit = parseInt(document.getElementById('timeLimit').value); // Atur waktu per soal
+            timeLimit = parseInt(document.getElementById('timeLimit').value);
 
             if (minRange >= maxRange) {
                 alert('Pastikan rentang minimum lebih kecil dari rentang maksimum!');
