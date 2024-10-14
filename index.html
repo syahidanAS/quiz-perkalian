@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Tebak Perkalian Dinamis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffeffd;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #quiz {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        #timer {
+            font-size: 20px;
+            font-weight: bold;
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="quiz" class="container">
+        <h1 class="text-center mb-4">Kuis Tebak Perkalian</h1>
+        <form id="rangeForm">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="minRange" class="form-label">Dari Perkalian: </label>
+                    <input type="number" class="form-control" id="minRange" value="1" min="1" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="maxRange" class="form-label">Sampai Perkalian: </label>
+                    <input type="number" class="form-control" id="maxRange" value="10" min="1" required>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="timeLimit" class="form-label">Waktu per soal (detik): </label>
+                    <input type="number" class="form-control" id="timeLimit" value="10" min="5" max="60">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Mulai Kuis</button>
+        </form>
+
+        <div id="game" style="display: none;">
+            <div class="mt-4">
+                <p id="question" class="fs-4"></p>
+                <input type="number" class="form-control mb-3" id="answer" placeholder="Masukkan jawaban">
+                <button id="submitAnswer" class="btn btn-success w-100">Submit</button>
+            </div>
+            <p id="feedback" class="mt-3"></p>
+            <p id="score"></p>
+            <div id="timer" class="text-center">Waktu: 0</div>
+        </div>
+
+        <div id="recap" style="display: none;">
+            <h2 class="text-center mt-4">Rekap Jawaban</h2>
+            <div id="results"></div>
+        </div>
+
+        <p class="text-center mt-4">Made With &#128151; By Syahidan</p>
+    </div>
+
+    <!-- Efek Suara -->
+    <audio id="correctSound" src="correct.mp3"></audio>
+    <audio id="wrongSound" src="wrong.mp3"></audio>
+    <audio id="finishSound" src="finish.mp3"></audio>
+
+    <script>
+        let num1, num2, correctAnswer, minRange, maxRange, timeLimit, timerInterval;
+        let currentQuestion = 0;
+        let totalQuestions = 20;
+        let correctAnswers = 0;
+        let wrongAnswers = 0; // Tambahan: untuk menghitung jawaban salah
+        let remainingTime;
+        let results = [];
+
+        // Referensi untuk efek suara
+        const correctSound = document.getElementById('correctSound');
+        const wrongSound = document.getElementById('wrongSound');
+        const finishSound = document.getElementById('finishSound');
+
+        // Fungsi untuk membuat soal baru
+        function generateQuestion() {
+            if (currentQuestion >= totalQuestions) {
+                showFinalScore();
+                return;
+            }
+            currentQuestion++;
+            num1 = Math.floor(Math.random() * (maxRange - minRange + 1)) + minRange;
+            num2 = Math.floor(Math.random() * (maxRange - minRange + 1)) + minRange;
+            correctAnswer = num1 * num2;
+            document.getElementById('question').textContent = `Soal ${currentQuestion}/${totalQuestions}: Berapakah ${num1} x ${num2}?`;
+            document.getElementById('answer').value = ''; // Kosongkan jawaban input
+            document.getElementById('feedback').textContent = ''; // Kosongkan feedback
+            startTimer(); // Mulai timer
+        }
+
+        // Fungsi untuk memulai timer
+        function startTimer() {
+            remainingTime = timeLimit;
+            document.getElementById('timer').textContent = `Waktu: ${remainingTime}`;
+
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            timerInterval = setInterval(function () {
+                remainingTime--;
+                document.getElementById('timer').textContent = `Waktu: ${remainingTime}`;
+
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        // Fungsi yang dijalankan saat waktu habis
+        function handleTimeOut() {
+            let result = {
+                question: `${num1} x ${num2}`,
+                userAnswer: 'Tidak dijawab',
+                correctAnswer: correctAnswer,
+                isCorrect: false
+            };
+            results.push(result);
+            wrongAnswers++; // Tambahkan jawaban salah
+            wrongSound.play(); // Mainkan suara saat tidak dijawab
+            generateQuestion(); // Pindah ke soal berikutnya
+        }
+
+        // Fungsi untuk memeriksa jawaban
+        function checkAnswer() {
+            let userAnswer = parseInt(document.getElementById('answer').value);
+            if (isNaN(userAnswer)) {
+                document.getElementById('feedback').textContent = 'Masukkan angka yang valid!';
+                return;
+            }
+
+            let result = {
+                question: `${num1} x ${num2}`,
+                userAnswer: userAnswer,
+                correctAnswer: correctAnswer,
+                isCorrect: userAnswer === correctAnswer
+            };
+
+            if (result.isCorrect) {
+                document.getElementById('feedback').textContent = 'Benar! Jawaban kamu tepat.';
+                correctAnswers++; // Tambahkan jawaban benar
+                correctSound.play(); // Mainkan suara jawaban benar
+            } else {
+                document.getElementById('feedback').textContent = `Salah! Jawaban yang benar adalah ${correctAnswer}.`;
+                wrongAnswers++; // Tambahkan jawaban salah
+                wrongSound.play(); // Mainkan suara jawaban salah
+            }
+
+            results.push(result);
+            clearInterval(timerInterval); // Hentikan timer saat jawaban sudah di-submit
+            setTimeout(generateQuestion, 1000); // Tunggu 1 detik sebelum soal baru muncul
+        }
+
+        // Fungsi untuk menampilkan skor akhir setelah semua soal selesai
+        function showFinalScore() {
+            document.getElementById('game').style.display = 'none';
+            document.getElementById('recap').style.display = 'block'; // Tampilkan rekap hasil
+
+            let scoreElement = document.getElementById('score');
+            scoreElement.innerHTML = `Kuis selesai! Jawaban benar ${correctAnswers} dari ${totalQuestions} soal.<br>
+                                      Jawaban benar: ${correctAnswers}, Jawaban salah: ${wrongAnswers}.`;
+
+            let resultsElement = document.getElementById('results');
+            resultsElement.innerHTML = ''; // Kosongkan konten sebelumnya
+
+            results.forEach((result, index) => {
+                let resultText = `<p>Soal ${index + 1}: ${result.question} = ${result.userAnswer} 
+                                  (${result.isCorrect ? 'Benar' : 'Salah'} - Jawaban yang benar: ${result.correctAnswer})</p>`;
+                resultsElement.innerHTML += resultText;
+            });
+
+            finishSound.play(); // Mainkan suara saat kuis selesai
+        }
+
+        // Saat form range dikirim, atur rentang dan mulai kuis
+        document.getElementById('rangeForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            minRange = parseInt(document.getElementById('minRange').value);
+            maxRange = parseInt(document.getElementById('maxRange').value);
+            timeLimit = parseInt(document.getElementById('timeLimit').value); // Atur waktu per soal
+
+            if (minRange >= maxRange) {
+                alert('Pastikan rentang minimum lebih kecil dari rentang maksimum!');
+                return;
+            }
+
+            document.getElementById('rangeForm').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            generateQuestion();
+        });
+
+        // Event listener untuk tombol submit jawaban
+        document.getElementById('submitAnswer').addEventListener('click', checkAnswer);
+    </script>
+</body>
+
+</html>
